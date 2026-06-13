@@ -1,11 +1,14 @@
 const express = require('express');
 const multer = require('multer');
+const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(cors());
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -40,9 +43,10 @@ app.get('/videos', (req, res) => {
   const dir = path.join(__dirname, 'uploads/videos');
   fs.readdir(dir, (err, files) => {
     if (err) return res.status(500).json({ error: 'Fayllarni o\'qib bo\'lmadi' });
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
     const videos = files.map((file) => ({
       filename: file,
-      url: `http://localhost:${port}/videos/${file}`,
+      url: `${baseUrl}/videos/${file}`,
     }));
     res.json(videos);
   });
@@ -53,12 +57,13 @@ app.post('/videos/upload', upload.single('video'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Video fayl yuborilmadi' });
   }
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
   res.status(201).json({
     message: 'Video muvaffaqiyatli yuklandi',
     filename: req.file.filename,
     originalName: req.file.originalname,
     size: req.file.size,
-    url: `http://localhost:${port}/videos/${req.file.filename}`,
+    url: `${baseUrl}/videos/${req.file.filename}`,
   });
 });
 
